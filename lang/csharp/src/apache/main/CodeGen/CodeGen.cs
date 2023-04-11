@@ -140,6 +140,19 @@ namespace Avro
         }
 
         /// <summary>
+        /// Parses and adds a schema object to generate code for.
+        /// </summary>
+        /// <param name="schemaText">schema object.</param>
+        /// <param name="namespaceMapping">namespace mapping key value pairs.</param>
+        public virtual void AddSchema(string schemaText, SchemaNames names,  IEnumerable<KeyValuePair<string, string>> namespaceMapping = null)
+        {
+            // Map namespaces
+            schemaText = ReplaceMappedNamespacesInSchema(schemaText, namespaceMapping);
+            Schema schema = Schema.Parse(schemaText, names, null);
+            Schemas.Add(schema);
+        }
+
+        /// <summary>
         /// Adds a namespace object for the given name into the dictionary if it doesn't exist yet.
         /// </summary>
         /// <param name="name">name of namespace.</param>
@@ -163,9 +176,9 @@ namespace Avro
                     ns.Imports.Add(nci);
                 }
 
-                CompileUnit.Namespaces.Add(ns);
                 NamespaceLookup.Add(name, ns);
             }
+            CompileUnit.Namespaces.Add(ns);
 
             return ns;
         }

@@ -24,6 +24,7 @@ namespace Avro
 {
     public class AvroGenTool
     {
+        private const string UNDEFINED_MESSAGE = "Undefined name: ";
         public static int Main(string[] args)
         {
             // Print usage if no arguments provided
@@ -181,17 +182,23 @@ namespace Avro
             return 0;
         }
 
-        public static int GenSchema(string infile, string outdir,
+        public static int GenSchema(string rootPath, string outdir,
             IEnumerable<KeyValuePair<string, string>> namespaceMapping, bool skipDirectories)
         {
+            CodeGen codegen = new CodeGen();
+            
             try
             {
-                string text = System.IO.File.ReadAllText(infile);
-                CodeGen codegen = new CodeGen();
-                codegen.AddSchema(text, namespaceMapping);
+                // Get all files from the path
+                var files = System.IO.Directory.GetFiles(rootPath, "*.avsc", System.IO.SearchOption.AllDirectories);
+                var names = new SchemaNames();
+                var preParsedSchemas = new HashSet<String>();
 
-                codegen.GenerateCode();
-                codegen.WriteTypes(outdir, skipDirectories);
+                // Generate code for each file
+                foreach (var infile in files)
+                {
+                    generate(namespaceMapping, names, preParsedSchemas, codegen, infile, outdir, skipDirectories);
+                }
             }
             catch (Exception ex)
             {
@@ -200,6 +207,59 @@ namespace Avro
             }
 
             return 0;
+        }
+
+        private static void generate(IEnumerable<KeyValuePair<string, string>> namespaceMapping,
+            SchemaNames names, ISet<String> preParsedSchemas, CodeGen codegen, string infile, string outdir, bool skipDirectories, bool firstTry=true)
+        {
+            // Check if the file has already been parsed
+            if (preParsedSchemas.Contains(infile))
+                return;
+
+            try
+            {
+                if(firstTry)
+                    System.Console.WriteLine("Generating code for {0}", infile);
+                var fileName = System.IO.Path.GetFileName(infile);
+                var text = System.IO.File.ReadAllText(infile);
+
+                codegen.AddSchema(text, names, namespaceMapping);
+                codegen.GenerateCode();
+                codegen.WriteTypes(outdir, skipDirectories);
+
+                // Add the file to the list of parsed files
+                preParsedSchemas.Add(infile);
+            }
+            catch (SchemaParseException spe)
+            {
+                // Check for undefined name error and try to parse that file
+                if (spe.Message.Contains(UNDEFINED_MESSAGE))
+                {
+                    var infilePath = System.IO.Path.GetDirectoryName(infile);
+                    var undefinedName = spe.Message.Substring(spe.Message.IndexOf(UNDEFINED_MESSAGE) + UNDEFINED_MESSAGE.Length).Split(' ')[0];
+                    var undefinedFile = System.IO.Path.Combine(infilePath, undefinedName + ".avsc");
+                    if (System.IO.File.Exists(undefinedFile))
+                    {
+                        // Generate the missing schema
+                        System.Console.WriteLine("Generating missing schema for {0}", undefinedFile);
+                        generate(namespaceMapping, names, preParsedSchemas, codegen, undefinedFile, outdir, skipDirectories);
+
+                        // Add the file to the list of parsed files
+                        preParsedSchemas.Add(undefinedFile);
+
+                        // Retry the original schema
+                        generate(namespaceMapping, names, preParsedSchemas, codegen, infile, outdir, skipDirectories, false);
+                    }
+                    else
+                    {
+                        throw spe;
+                    }
+                }
+                else
+                {
+                    throw spe;
+                }
+            }
         }
     }
 }
