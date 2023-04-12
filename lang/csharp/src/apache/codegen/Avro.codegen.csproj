@@ -26,7 +26,7 @@
     unless framework is explicitly specified with 'dotnet tool install'
     https://docs.microsoft.com/en-us/dotnet/core/tools/dotnet-tool-install
     -->
-    <TargetFrameworks>$(DefaultExeTargetFrameworks)</TargetFrameworks>
+    <TargetFrameworks>net6.0</TargetFrameworks>
     <AssemblyName>avrogen</AssemblyName>
     <RootNamespace>Avro.codegen</RootNamespace>
     <SignAssembly>true</SignAssembly>
@@ -35,7 +35,7 @@
 
   <PropertyGroup>
     <!-- NuGet Package Settings -->
-    <PackageId>Apache.Avro.Tools</PackageId>
+    <PackageId>GMM.Avro.Tools</PackageId>
     <PackAsTool>true</PackAsTool>
     <ToolCommandName>avrogen</ToolCommandName>
     <Description>
@@ -55,6 +55,10 @@
   -->
   <PropertyGroup>
     <RollForward>Major</RollForward>
+    <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+    <PackageProjectUrl>https://github.com/frontporch/avro</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/frontporch/avro.git</RepositoryUrl>
+    <Version>$(VersionPrefix)</Version>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)'=='Release'">
