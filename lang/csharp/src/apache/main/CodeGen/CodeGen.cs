@@ -178,7 +178,9 @@ namespace Avro
 
                 NamespaceLookup.Add(name, ns);
             }
-            CompileUnit.Namespaces.Add(ns);
+
+            if (!CompileUnit.Namespaces.Contains(ns))
+                CompileUnit.Namespaces.Add(ns);
 
             return ns;
         }
@@ -477,7 +479,9 @@ namespace Avro
             }
 
             CodeNamespace codens = AddNamespace(nspace);
-            codens.Types.Add(ctd);
+
+            if (!codens.Types.Contains(ctd))
+                codens.Types.Add(ctd);
         }
 
         /// <summary>
@@ -528,7 +532,8 @@ namespace Avro
 
             CodeNamespace codens = AddNamespace(nspace);
 
-            codens.Types.Add(ctd);
+            if (!codens.Types.Contains(ctd))
+                codens.Types.Add(ctd);
         }
 
         /// <summary>
@@ -617,7 +622,8 @@ namespace Avro
 
             CodeNamespace codens = AddNamespace(nspace);
 
-            codens.Types.Add(ctd);
+            if (!codens.Types.Contains(ctd))
+                codens.Types.Add(ctd);
 
             // Create callback abstract class
             ctd = new CodeTypeDeclaration(protocolNameMangled + "Callback");
@@ -631,7 +637,8 @@ namespace Avro
 
             AddMethods(protocol, true, ctd);
 
-            codens.Types.Add(ctd);
+            if (!codens.Types.Contains(ctd))
+                codens.Types.Add(ctd);
         }
 
         /// <summary>
@@ -913,7 +920,8 @@ namespace Avro
 
             CodeNamespace codens = AddNamespace(nspace);
 
-            codens.Types.Add(ctd);
+            if(!codens.Types.Contains(ctd))
+                codens.Types.Add(ctd);
 
             return ctd;
         }
@@ -1156,6 +1164,16 @@ namespace Avro
         /// <param name="skipDirectories">skip creation of directories based on schema namespace</param>
         public virtual void WriteTypes(string outputdir, bool skipDirectories = false)
         {
+            WriteTypes(new HashSet<string>(), outputdir, skipDirectories);
+        }
+
+        /// <summary>
+        /// Writes each types in each namespaces into individual files.
+        /// </summary>
+        /// <param name="outputdir">name of directory to write to.</param>
+        /// <param name="skipDirectories">skip creation of directories based on schema namespace</param>
+        public virtual void WriteTypes(ISet<String> writtenTypes, string outputdir, bool skipDirectories = false)
+        {
             var cscp = new CSharpCodeProvider();
 
             var opts = new CodeGeneratorOptions();
@@ -1188,14 +1206,27 @@ namespace Avro
                 var types = ns.Types;
                 for (int j = 0; j < types.Count; j++)
                 {
+                    Boolean written = false;
                     var ctd = types[j];
                     string file = Path.Combine(dir, Path.ChangeExtension(CodeGenUtil.Instance.UnMangle(ctd.Name), "cs"));
-                    using (var writer = new StreamWriter(file, false))
+                    if (!writtenTypes.Contains(file))
                     {
-                        new_ns.Types.Add(ctd);
-                        cscp.GenerateCodeFromNamespace(new_ns, writer, opts);
+                        using (var writer = new StreamWriter(file, false))
+                        {
+                            new_ns.Types.Add(ctd);
+
+                            // Write the file to the console
+                            Console.WriteLine("Writing file: {0}", file);
+                            cscp.GenerateCodeFromNamespace(new_ns, writer, opts);
+                            written = true;
+                            writtenTypes.Add(file);
+                        }
+
                         new_ns.Types.Remove(ctd);
                     }
+
+                    if (written)
+                        Console.WriteLine(System.IO.File.ReadAllText(file));
                 }
             }
         }

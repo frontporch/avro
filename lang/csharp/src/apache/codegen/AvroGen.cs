@@ -193,11 +193,12 @@ namespace Avro
                 var files = System.IO.Directory.GetFiles(rootPath, "*.avsc", System.IO.SearchOption.AllDirectories);
                 var names = new SchemaNames();
                 var preParsedSchemas = new HashSet<String>();
+                var writtenTypes = new HashSet<String>();
 
                 // Generate code for each file
                 foreach (var infile in files)
                 {
-                    generate(namespaceMapping, names, preParsedSchemas, codegen, infile, outdir, skipDirectories);
+                    generate(namespaceMapping, names, writtenTypes, preParsedSchemas, codegen, infile, outdir, skipDirectories);
                 }
             }
             catch (Exception ex)
@@ -210,7 +211,7 @@ namespace Avro
         }
 
         private static void generate(IEnumerable<KeyValuePair<string, string>> namespaceMapping,
-            SchemaNames names, ISet<String> preParsedSchemas, CodeGen codegen, string infile, string outdir, bool skipDirectories, bool firstTry=true)
+            SchemaNames names, ISet<String> writtenTypes, ISet<String> preParsedSchemas, CodeGen codegen, string infile, string outdir, bool skipDirectories, bool firstTry=true)
         {
             // Check if the file has already been parsed
             if (preParsedSchemas.Contains(infile))
@@ -225,8 +226,8 @@ namespace Avro
 
                 codegen.AddSchema(text, names, namespaceMapping);
                 codegen.GenerateCode();
-                codegen.WriteTypes(outdir, skipDirectories);
-
+                codegen.WriteTypes(writtenTypes, outdir, skipDirectories);
+                
                 // Add the file to the list of parsed files
                 preParsedSchemas.Add(infile);
             }
@@ -242,13 +243,13 @@ namespace Avro
                     {
                         // Generate the missing schema
                         System.Console.WriteLine("Generating missing schema for {0}", undefinedFile);
-                        generate(namespaceMapping, names, preParsedSchemas, codegen, undefinedFile, outdir, skipDirectories);
+                        generate(namespaceMapping, names, writtenTypes, preParsedSchemas, codegen, undefinedFile, outdir, skipDirectories);
 
                         // Add the file to the list of parsed files
                         preParsedSchemas.Add(undefinedFile);
 
                         // Retry the original schema
-                        generate(namespaceMapping, names, preParsedSchemas, codegen, infile, outdir, skipDirectories, false);
+                        generate(namespaceMapping, names, writtenTypes, preParsedSchemas, codegen, infile, outdir, skipDirectories, false);
                     }
                     else
                     {
