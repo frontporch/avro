@@ -200,6 +200,9 @@ namespace Avro
                 {
                     generate(namespaceMapping, names, writtenTypes, preParsedSchemas, codegen, infile, outdir, skipDirectories);
                 }
+
+                codegen.GenerateCode();
+                codegen.WriteTypes(writtenTypes, outdir, skipDirectories);
             }
             catch (Exception ex)
             {
@@ -225,9 +228,7 @@ namespace Avro
                 var text = System.IO.File.ReadAllText(infile);
 
                 codegen.AddSchema(text, names, namespaceMapping);
-                codegen.GenerateCode();
-                codegen.WriteTypes(writtenTypes, outdir, skipDirectories);
-                
+
                 // Add the file to the list of parsed files
                 preParsedSchemas.Add(infile);
             }
