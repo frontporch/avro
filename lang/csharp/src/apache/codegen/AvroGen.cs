@@ -46,7 +46,7 @@ namespace Avro
                 // Print version information
                 // Note: Use InformationalVersion attribute
                 // It is capable to include semver prerelease information label (if prerelease), e.g. 1.x.y-beta.z
-                Console.WriteLine(typeof(AvroGenTool).Assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>().InformationalVersion);
+                Console.WriteLine($"Version: {typeof(AvroGenTool).Assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>().InformationalVersion}");
                 return 0;
             }
 

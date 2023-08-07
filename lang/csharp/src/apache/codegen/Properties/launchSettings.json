@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "Avro.codegen": {
+      "commandName": "Project",
+      "commandLineArgs": "-s C:\\Repos\\gmm-schema\\Avro ./"
+    }
+  }
+}
