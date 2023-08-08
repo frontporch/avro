@@ -114,8 +114,13 @@ namespace Avro
             this.Documentation = doc;
             this.aliases = aliases;
             if (null != name.Name)  // Added this check for anonymous records inside Message
-                if (!names.Contains(name))
-                    names.Add(name, this);
+            {
+                // Check if the name is already defined, it indicates a previous failure and should be removed
+                if (names.Contains(name))
+                    names.Names.Remove(name);
+
+                names.Add(name, this);
+            }
         }
 
         /// <summary>
